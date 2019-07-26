@@ -49,6 +49,12 @@ jobs:
             docker tag ${PROJECT_NAME} us.gcr.io/${GOOGLE_PROJECT_ID}/${PROJECT_NAME}:${CIRCLE_SHA1}
             gcloud auth print-access-token | docker login -u oauth2accesstoken --password-stdin https://us.gcr.io
             docker push us.gcr.io/${GOOGLE_PROJECT_ID}/${PROJECT_NAME}:${CIRCLE_SHA1}
+      - run:
+          name: Deploy to Kubernetes
+          command: |
+            envsubst < ${HOME}/project/deploy.yml > ${HOME}/patched_deploy.yml
+            kubectl apply -f ${HOME}/patched_deploy.yml
+            kubectl rollout status deployment/${PROJECT_NAME}
 workflows:
   version: 2
   test_build_deploy:
@@ -57,3 +63,6 @@ workflows:
       - deploy:
           requires:
             - build_and_test
+          filters:
+            branches:
+              only: master
