@@ -55,5 +55,5 @@ workflows:
     jobs:
       - build_and_test
       - deploy:
-          repquires:
+          requires:
             - build_and_test
