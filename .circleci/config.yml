@@ -41,9 +41,19 @@ jobs:
             gcloud --quiet config set project ${GOOGLE_PROJECT_ID}
             gcloud --quiet config set compute/zone ${GOOGLE_COMPUTE_ZONE}
             gcloud --quiet container clusters get-credentials ${GOOGLE_CLUSTER_NAME}
+      - setup_remote_docker
+      - run:
+          name: Docker build and push
+          command: |
+            docker build -t ${PROJECT_NAME} .
+            docker tag ${PROJECT_NAME} us.gcr.io/${GOOGLE_PROJECT_ID}/${PROJECT_NAME}:${CIRCLE_SHA1}
+            gcloud auth print-access-token | docker login -u oauth2accesstoken --password-stdin https://us.gcr.io
+            docker push us.gcr.io/${GOOGLE_PROJECT_ID}/${PROJECT_NAME}:${CIRCLE_SHA1}
 workflows:
   version: 2
   test_build_deploy:
     jobs:
       - build_and_test
-      - deploy
+      - deploy:
+          repquires:
+            - build_and_test
